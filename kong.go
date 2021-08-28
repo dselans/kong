@@ -72,7 +72,7 @@ type Kong struct {
 
 // New creates a new Kong parser on grammar.
 //
-// See the README (https://github.com/alecthomas/kong) for usage instructions.
+// See the README (https://github.com/dselans/kong) for usage instructions.
 func New(grammar interface{}, options ...Option) (*Kong, error) {
 	k := &Kong{
 		Exit:              os.Exit,

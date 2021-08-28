@@ -9,7 +9,7 @@
 //
 //     package main
 //
-//     import "github.com/alecthomas/kong"
+//     import "github.com/dselans/kong"
 //
 //     var CLI struct {
 //       Rm struct {
@@ -28,5 +28,5 @@
 //       kong.Parse(&CLI)
 //     }
 //
-// See https://github.com/alecthomas/kong for details.
+// See https://github.com/dselans/kong for details.
 package kong

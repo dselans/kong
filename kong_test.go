@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/alecthomas/kong"
+	"github.com/dselans/kong"
 )
 
 func mustNew(t *testing.T, cli interface{}, options ...kong.Option) *kong.Kong {

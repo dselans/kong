@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/alecthomas/kong"
+	"github.com/dselans/kong"
 )
 
 func TestValueMapper(t *testing.T) {
