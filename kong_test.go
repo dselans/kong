@@ -1283,19 +1283,87 @@ func TestDuplicateNestedShortFlags(t *testing.T) {
 	require.EqualError(t, err, "<anonymous struct>.Flag2: duplicate short flag -t")
 }
 
-func TestHydratePointerCommands(t *testing.T) {
+func TestHydratePointerCommandsAndEmbeds(t *testing.T) {
 	type cmd struct {
 		Flag bool
 	}
 
+	type embed struct {
+		Embed bool
+	}
+
 	var cli struct {
-		Cmd *cmd `cmd:""`
+		Cmd   *cmd   `cmd:""`
+		Embed *embed `embed:""`
 	}
 
 	k := mustNew(t, &cli)
-	_, err := k.Parse([]string{"cmd", "--flag"})
+	_, err := k.Parse([]string{"--embed", "cmd", "--flag"})
 	require.NoError(t, err)
 	require.Equal(t, &cmd{Flag: true}, cli.Cmd)
+	require.Equal(t, &embed{Embed: true}, cli.Embed)
+}
+
+// nolint
+type testIgnoreFields struct {
+	Foo struct {
+		Bar bool
+		Sub struct {
+			SubFlag1     bool `kong:"name=subflag1"`
+			XXX_SubFlag2 bool `kong:"name=subflag2"`
+		} `kong:"cmd"`
+	} `kong:"cmd"`
+	XXX_Baz struct {
+		Boo bool
+	} `kong:"cmd,name=baz"`
+}
+
+func TestIgnoreRegex(t *testing.T) {
+	cli := testIgnoreFields{}
+
+	k, err := kong.New(&cli, kong.IgnoreFieldsRegex(`.*\.XXX_.+`))
+	require.NoError(t, err)
+
+	_, err = k.Parse([]string{"foo", "sub"})
+	require.NoError(t, err)
+
+	_, err = k.Parse([]string{"foo", "sub", "--subflag1"})
+	require.NoError(t, err)
+
+	_, err = k.Parse([]string{"foo", "sub", "--subflag2"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unknown flag --subflag2")
+
+	_, err = k.Parse([]string{"baz"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unexpected argument baz")
+}
+
+// Verify that passing a nil regex will work
+func TestIgnoreRegexEmpty(t *testing.T) {
+	cli := testIgnoreFields{}
+
+	_, err := kong.New(&cli, kong.IgnoreFieldsRegex(""))
+	require.Error(t, err)
+	require.Contains(t, "regex input cannot be empty", err.Error())
+}
+
+type optionWithErr struct{}
+
+func (o *optionWithErr) Apply(k *kong.Kong) error {
+	return errors.New("option returned err")
+}
+
+func TestOptionReturnsErr(t *testing.T) {
+	cli := struct {
+		Test bool
+	}{}
+
+	optWithError := &optionWithErr{}
+
+	_, err := kong.New(cli, optWithError)
+	require.Error(t, err)
+	require.Equal(t, "option returned err", err.Error())
 }
 
 // nolint
